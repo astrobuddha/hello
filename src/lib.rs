@@ -1,6 +1,6 @@
 use std::  {
     fs,
-    thread,
+    thread::{self, Thread},
     io::{prelude::*, BufReader},
     net::TcpStream,
     time::Duration,
@@ -26,4 +26,19 @@ pub fn handle_connection(mut stream: TcpStream) {
     let response = format!("{status_line}\r\n]Content-Length: {length}\r\n\r\n{contents}");
 
     stream.write_all(response.as_bytes()).unwrap();
+}
+
+pub struct ThreadPool;
+
+impl ThreadPool {
+    pub fn new(size: usize) -> ThreadPool {
+        ThreadPool
+    }
+
+
+    pub fn execute<F>(&self, f: F)
+    where F : FnOnce() + Send + 'static,
+    {
+
+    }
 }
