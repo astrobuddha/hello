@@ -28,13 +28,29 @@ pub fn handle_connection(mut stream: TcpStream) {
     stream.write_all(response.as_bytes()).unwrap();
 }
 
-pub struct ThreadPool;
+pub struct ThreadPool {
+    threads: Vec<thread::JoinHandle<()>>,
+}
 
 impl ThreadPool {
+    /// Create a new ThreadPool.
+    ///
+    /// The size is the number of threads in the pool.
+    ///
+    /// # Panics
+    /// this could also be done with a fn build(...) -> Result<ThreadPool, PoolCreationError>
+    ///
+    /// The `new` function will panic if the size is zero.
     pub fn new(size: usize) -> ThreadPool {
         assert!(size > 0);
-        
-        ThreadPool
+
+        let mut threads = Vec::with_capacity(size);
+
+        for _ in 0..size {
+
+        }
+
+        ThreadPool { threads }
     }
 
 
