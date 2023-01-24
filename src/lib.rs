@@ -29,7 +29,12 @@ pub fn handle_connection(mut stream: TcpStream) {
 }
 
 pub struct ThreadPool {
-    threads: Vec<thread::JoinHandle<()>>,
+    workers: Vec<Worker>,
+}
+
+struct Worker {
+    id: usize,
+    handle: thread::JoinHandle<()>,
 }
 
 impl ThreadPool {
@@ -44,13 +49,14 @@ impl ThreadPool {
     pub fn new(size: usize) -> ThreadPool {
         assert!(size > 0);
 
-        let mut threads = Vec::with_capacity(size);
+        let mut workers = Vec::with_capacity(size);
 
-        for _ in 0..size {
-
+        for id in 0..size {
+            // create some threads and store them in the vector
+            workers.push(Worker::new(id))
         }
 
-        ThreadPool { threads }
+        ThreadPool { workers }
     }
 
 
@@ -58,5 +64,17 @@ impl ThreadPool {
     where F : FnOnce() + Send + 'static,
     {
 
+    }
+}
+
+impl Worker {
+    fn new(id: usize) -> Worker {
+        let thread = thread::spawn(|| {});
+        
+
+        Worker {
+            id,
+            handle: thread
+        }
     }
 }
