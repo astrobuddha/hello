@@ -1,10 +1,72 @@
 use std::  {
     fs,
-    thread::{self, Thread},
+    thread,
     io::{prelude::*, BufReader},
     net::TcpStream,
     time::Duration,
+    sync::{mpsc, Arc, Mutex},
 };
+
+struct Job;
+
+pub struct ThreadPool {
+    workers: Vec<Worker>,
+    sender: mpsc::Sender<Job>
+}
+
+impl ThreadPool {
+    /// Create a new ThreadPool.
+    ///
+    /// The size is the number of threads in the pool.
+    ///
+    /// # Panics
+    /// this could also be done with a fn build(...) -> Result<ThreadPool, PoolCreationError>
+    ///
+    /// The `new` function will panic if the size is zero.
+    pub fn new(size: usize) -> ThreadPool {
+        assert!(size > 0);
+
+        let (sender, receiver) = mpsc::channel();
+
+        let arc_reciever = Arc::new(Mutex::new(receiver));
+
+        let mut workers = Vec::with_capacity(size);
+
+        for id in 0..size {
+            // create some threads and store them in the vector
+            workers.push(Worker::new(id, Arc::clone(&arc_reciever)));
+        }
+
+        ThreadPool { workers, sender }
+    }
+
+
+    pub fn execute<F>(&self, f: F)
+    where F : FnOnce() + Send + 'static,
+    {
+
+    }
+}
+
+struct Worker {
+    id: usize,
+    handle: thread::JoinHandle<()>,
+}
+
+impl Worker {
+    fn new(id: usize, reciever: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
+        let thread = thread::spawn(|| {
+            drop(reciever);
+        });
+        
+
+        Worker {
+            id,
+            handle: thread
+        }
+    }
+}
+
 
 pub fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
@@ -26,55 +88,4 @@ pub fn handle_connection(mut stream: TcpStream) {
     let response = format!("{status_line}\r\n]Content-Length: {length}\r\n\r\n{contents}");
 
     stream.write_all(response.as_bytes()).unwrap();
-}
-
-pub struct ThreadPool {
-    workers: Vec<Worker>,
-}
-
-struct Worker {
-    id: usize,
-    handle: thread::JoinHandle<()>,
-}
-
-impl ThreadPool {
-    /// Create a new ThreadPool.
-    ///
-    /// The size is the number of threads in the pool.
-    ///
-    /// # Panics
-    /// this could also be done with a fn build(...) -> Result<ThreadPool, PoolCreationError>
-    ///
-    /// The `new` function will panic if the size is zero.
-    pub fn new(size: usize) -> ThreadPool {
-        assert!(size > 0);
-
-        let mut workers = Vec::with_capacity(size);
-
-        for id in 0..size {
-            // create some threads and store them in the vector
-            workers.push(Worker::new(id))
-        }
-
-        ThreadPool { workers }
-    }
-
-
-    pub fn execute<F>(&self, f: F)
-    where F : FnOnce() + Send + 'static,
-    {
-
-    }
-}
-
-impl Worker {
-    fn new(id: usize) -> Worker {
-        let thread = thread::spawn(|| {});
-        
-
-        Worker {
-            id,
-            handle: thread
-        }
-    }
 }
